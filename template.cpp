@@ -11,7 +11,7 @@
 #endif
 
 //#define FULLSCREEN
-//#define ADVANCEDGL
+#define ADVANCEDGL
 
 #include "game.h"
 
@@ -388,7 +388,7 @@ int main( int argc, char **argv )
 				game->KeyUp( event.key.keysym.scancode );
 				break;
 			case SDL_MOUSEMOTION:
-				game->MouseMove( event.motion.xrel, event.motion.yrel );
+				game->MouseMove( event.motion.x, event.motion.y); //why doesn't this default to x and y (xrel and yrel for mouse velocity)
 				break;
 			case SDL_MOUSEBUTTONUP:
 				game->MouseUp( event.button.button );

@@ -1,0 +1,15 @@
+quadrant 1:
+startx < ant < endX
+starty < ant <  endY
+
+quadrant 2:
+startX < ant < endX
+startY > ant > endy
+
+quadrant 3:
+startx > ant > endX
+starty > ant > endY
+
+quadrant 4: 
+startx > ant > endX
+starty < ant < endY

@@ -1,6 +1,19 @@
-﻿C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(519,5): warning MSB8028: The intermediate directory (Debug\) contains files shared from another project (tmpl_2019-08.vcxproj).  This can lead to incorrect clean and rebuild behavior.
-  game.cpp
-  surface.cpp
-  template.cpp
-  Generating Code...
+﻿  game.cpp
+C:\Users\angdo\C++ files\breda-ant-game\game.cpp(114,86): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\angdo\C++ files\breda-ant-game\game.cpp(114,65): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\angdo\C++ files\breda-ant-game\game.cpp(114,44): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\angdo\C++ files\breda-ant-game\game.cpp(114,23): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\angdo\C++ files\breda-ant-game\game.cpp(115,86): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\angdo\C++ files\breda-ant-game\game.cpp(115,65): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\angdo\C++ files\breda-ant-game\game.cpp(115,44): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\angdo\C++ files\breda-ant-game\game.cpp(115,23): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\angdo\C++ files\breda-ant-game\game.cpp(145,123): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\angdo\C++ files\breda-ant-game\game.cpp(145,93): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\angdo\C++ files\breda-ant-game\game.cpp(145,63): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\angdo\C++ files\breda-ant-game\game.cpp(145,33): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\angdo\C++ files\breda-ant-game\game.cpp(146,123): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\angdo\C++ files\breda-ant-game\game.cpp(146,93): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\angdo\C++ files\breda-ant-game\game.cpp(146,63): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\angdo\C++ files\breda-ant-game\game.cpp(146,33): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+     Creating library C:\Users\angdo\C++ files\breda-ant-game\breda-ant-game_x86_debug.lib and object C:\Users\angdo\C++ files\breda-ant-game\breda-ant-game_x86_debug.exp
   tmpl_2019-08.vcxproj -> C:\Users\angdo\C++ files\breda-ant-game\breda-ant-game_x86_debug.exe
