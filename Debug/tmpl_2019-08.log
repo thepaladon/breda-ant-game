@@ -1,2 +1,6 @@
-﻿  game.cpp
-  tmpl_2019-08.vcxproj -> C:\Users\angdo\C++ files\Ants!\ant-game\tmpl_2019-08_x86_debug.exe
+﻿C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(519,5): warning MSB8028: The intermediate directory (Debug\) contains files shared from another project (tmpl_2019-08.vcxproj).  This can lead to incorrect clean and rebuild behavior.
+  game.cpp
+  surface.cpp
+  template.cpp
+  Generating Code...
+  tmpl_2019-08.vcxproj -> C:\Users\angdo\C++ files\breda-ant-game\breda-ant-game_x86_debug.exe
