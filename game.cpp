@@ -20,9 +20,12 @@ namespace Tmpl8
 	bool destinationPlaced = false;
 	int boxStyle;
 	int numSelected = 0;
-
+	int debugInt;
+	int numOfActiveAnts = 10;
 
 	Sprite ant(new Surface("assets/ant2.png"), 1);
+	int antSpeed = 1;
+
 	class Ant
 	{
 	public:
@@ -37,11 +40,45 @@ namespace Tmpl8
 		{
 			ant.DrawScaled(x, y , ANTSIZE, ANTSIZE, gameScreen);
 
+			destinationToMarker = sqrt(pow(x - antDestinationX, 2) + pow(y - antDestinationY, 2));
+
 			if (antSelected == true) 				
 				gameScreen->Box(x, y, x + ANTSIZE, y + ANTSIZE, 0x29B1CA);
-
 			BoxConfiguration();
+
+
+
+			if (destinationToMarker <= 10)
+				antHeadingToDestination = false;
+			else if (antSelected && destinationPlaced)
+				antHeadingToDestination = true;
 			
+
+			//basic pathfinding 
+			if (antHeadingToDestination == true) {
+				if (antDestinationX >= x && antDestinationY >= y) {
+					//destination in bottom right
+					debugInt = 4;
+					x += antSpeed;
+					y += antSpeed;
+				}else if(antDestinationX <= x && antDestinationY >= y){
+					//destinaiton in bottom left
+					debugInt = 3;
+					x -= antSpeed;
+					y += antSpeed;
+				}else if (antDestinationX <= x && antDestinationY <= y) {
+					//destination in top left
+					debugInt = 2;
+					x -= antSpeed;
+					y -= antSpeed;
+
+				}else if(antDestinationX >= x && antDestinationY <= y) {
+					//destination in top rights
+					debugInt = 1;
+					x += antSpeed;
+					y -= antSpeed;
+				}
+			}
 
 		}
 
@@ -92,7 +129,9 @@ namespace Tmpl8
 
 		int x, y, rotation;
 		bool antSelected = false;
-		int antDestinationX, antDestinationY;
+		bool countedThisAntAlready = false;
+		bool antHeadingToDestination = false;
+		float destinationToMarker;
 	};
 
 	Ant myant[10];
@@ -114,13 +153,19 @@ namespace Tmpl8
 		screen->Line(mousex - cursorSize, mousey - cursorSize, mousex + cursorSize, mousey + cursorSize, 0xff0000);
 		screen->Line(mousex - cursorSize, mousey + cursorSize, mousex + cursorSize, mousey - cursorSize, 0xff0000);
 
-
 		if (GetAsyncKeyState(VK_LBUTTON))
 		{
 			if (doThisOnce == true) {
 				//start coords of the box
 				boxStartX = mousex;
 				boxStartY = mousey;
+				
+				for (int n = 0; n < numOfActiveAnts; n++) {
+					myant[n].antSelected = false;
+					myant[n].countedThisAntAlready= false;
+				}
+				
+				numSelected = 0;
 				doThisOnce = false;
 			}
 			//end coords of the box
@@ -131,27 +176,33 @@ namespace Tmpl8
 			// 0x29B1CA -> nice cyan color for selected 
 			screen->Box(boxStartX, boxStartY, boxEndX, boxEndY, 0x29B1CA);
 
+
+
 		}
 		else doThisOnce = true;
 
-		if (GetAsyncKeyState(VK_RBUTTON)) {
+		if (GetAsyncKeyState(VK_RBUTTON) && numSelected > 0) {
 			destinationPlaced = true;
 			antDestinationX = mousex;
 			antDestinationY = mousey;
 		}
 
 		//fix this so it only appeared when there is more that 1 ant selected at the moment and make the ants travel towards it
-		if (destinationPlaced) {
+		if (destinationPlaced && numSelected > 0) {
 			screen->Line(antDestinationX - cursorSize, antDestinationY - cursorSize, antDestinationX + cursorSize, antDestinationY + cursorSize, 0x29B1CA);
 			screen->Line(antDestinationX - cursorSize, antDestinationY + cursorSize, antDestinationX + cursorSize, antDestinationY - cursorSize, 0x29B1CA);
 		}
 
-		for (int i = 0; i < 9; i++) {
+		for (int i = 0; i < numOfActiveAnts; i++) {
+			
 			myant[i].Move(screen);
 
-			//for tomorrow: fix this so it displays accurate numbers of ants selected
+			//displays the number of ants selected
 			if (myant[i].antSelected == true) {
-				numSelected += 1 ;
+				if (!myant[i].countedThisAntAlready) {
+					numSelected += 1;
+					myant[i].countedThisAntAlready = true;
+				}
 			}
 		}
 
@@ -173,11 +224,15 @@ namespace Tmpl8
 
 		// DEBUG COMMANDS:
 		
+		//printf("direction: %i \n", debugInt);
+		//printf("antDir: %i %i \n", antDestinationX, antDestinationY);
+		//printf("antCoords: %i %i \n", myant[1].x, myant[1].y);
+		printf("ant 1 distance: %f \n", myant[1].destinationToMarker);
 		//printf("mouse coordinates %i %i \n", mousex, mousey);
-		printf("num of ants selected: %i \n", numSelected);
+		//printf("num of ants selected: %i \n", numSelected);
 		//printf("Box Style %i \n", boxStyle);
 		//printf("start X: %i  start Y: %i \n", boxStartX, boxStartY);
 		//printf("end X: %i  end Y: %i \n", boxEndX, boxEndY);
-
+		
 	}
 };
