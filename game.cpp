@@ -2,10 +2,11 @@
 #include "surface.h"
 #include <cstdio> 
 
-#define WIN32_LEAN_AND_MEAN
-#define ANTSIZE 20
 #include <windows.h>
 #include "template.h"
+
+#define WIN32_LEAN_AND_MEAN
+#define ANTSIZE 10
 
 namespace Tmpl8
 {
@@ -21,7 +22,7 @@ namespace Tmpl8
 	int boxStyle;
 	int numSelected = 0;
 	int debugInt;
-	int numOfActiveAnts = 10;
+	int numOfActiveAnts = 20;
 
 	Sprite ant(new Surface("assets/ant2.png"), 1);
 	int antSpeed = 1;
@@ -39,47 +40,78 @@ namespace Tmpl8
 		void Move(Surface* gameScreen)
 		{
 			ant.DrawScaled(x, y , ANTSIZE, ANTSIZE, gameScreen);
-
 			destinationToMarker = sqrt(pow(x - antDestinationX, 2) + pow(y - antDestinationY, 2));
 
 			if (antSelected == true) 				
 				gameScreen->Box(x, y, x + ANTSIZE, y + ANTSIZE, 0x29B1CA);
+
+
+
 			BoxConfiguration();
+			BasicPathfinding();
+		}
 
 
+		bool checkCollide(int xTwo, int yTwo)
+		{
+			int oWidth = ANTSIZE;
+			int oHeight = ANTSIZE;
+			int oTwoWidth = ANTSIZE;
+			int oTwoHeight = ANTSIZE;
+
+			// AABB 1
+			int x1Min = x;
+			int x1Max = x + oWidth;
+			int y1Max = y + oHeight;
+			int y1Min = y;
+
+			// AABB 2
+			int x2Min = xTwo;
+			int x2Max = xTwo + oTwoWidth;
+			int y2Max = yTwo + oTwoHeight;
+			int y2Min = yTwo;
+
+			// Collision tests
+			if (x1Max < x2Min || x1Min > x2Max) return false;
+			if (y1Max < y2Min || y1Min > y2Max) return false;
+
+			return true;
+		}
+
+		void BasicPathfinding() {
 
 			if (destinationToMarker <= 10)
 				antHeadingToDestination = false;
 			else if (antSelected && destinationPlaced)
 				antHeadingToDestination = true;
-			
 
-			//basic pathfinding 
 			if (antHeadingToDestination == true) {
-				if (antDestinationX >= x && antDestinationY >= y) {
+				if (antDestinationX - (ANTSIZE / 2) >= x && antDestinationY - (ANTSIZE / 2) >= y) {
 					//destination in bottom right
 					debugInt = 4;
 					x += antSpeed;
 					y += antSpeed;
-				}else if(antDestinationX <= x && antDestinationY >= y){
+				}
+				else if (antDestinationX - (ANTSIZE / 2) <= x && antDestinationY - (ANTSIZE / 2) >= y) {
 					//destinaiton in bottom left
 					debugInt = 3;
 					x -= antSpeed;
 					y += antSpeed;
-				}else if (antDestinationX <= x && antDestinationY <= y) {
+				}
+				else if (antDestinationX - (ANTSIZE / 2) <= x && antDestinationY - (ANTSIZE / 2) <= y) {
 					//destination in top left
 					debugInt = 2;
 					x -= antSpeed;
 					y -= antSpeed;
 
-				}else if(antDestinationX >= x && antDestinationY <= y) {
+				}
+				else if (antDestinationX - (ANTSIZE / 2) >= x && antDestinationY - (ANTSIZE / 2) <= y) {
 					//destination in top rights
 					debugInt = 1;
 					x += antSpeed;
 					y -= antSpeed;
 				}
 			}
-
 		}
 
 		void BoxConfiguration() {
@@ -127,14 +159,37 @@ namespace Tmpl8
 			
 		}
 
-		int x, y, rotation;
+		int x, y, rotation; // x and y are the top right coordinates of each ants
+		int xCollisionUpRight, yCollisionUpRight;
 		bool antSelected = false;
 		bool countedThisAntAlready = false;
 		bool antHeadingToDestination = false;
 		float destinationToMarker;
 	};
 
-	Ant myant[10];
+	bool checkCollide(int x, int y, int oWidth, int oHeight, int xTwo, int yTwo, int oTwoWidth, int oTwoHeight)
+	{
+		// AABB 1
+		int x1Min = x;
+		int x1Max = x + oWidth;
+		int y1Max = y + oHeight;
+		int y1Min = y;
+
+		// AABB 2
+		int x2Min = xTwo;
+		int x2Max = xTwo + oTwoWidth;
+		int y2Max = yTwo + oTwoHeight;
+		int y2Min = yTwo;
+
+		// Collision tests
+		if (x1Max < x2Min || x1Min > x2Max) return false;
+		if (y1Max < y2Min || y1Min > y2Max) return false;
+
+		return true;
+	}
+
+
+	Ant myant[50];
 
 	void Game::Init()
 	{
@@ -148,8 +203,15 @@ namespace Tmpl8
 
 	void Game::Tick(float deltaTime)
 	{
+
+
 		screen->Clear(0);
-		screen->Print("MAIN SCREEN yes", 20, 20, 0xffffff);
+
+		for (int y = 0; y < 72; y++) // the y of the map is drawn
+			for (int x = 0; x < 128; x++) //the x of the map is drawn
+				screen->Box(x * 10, y * 10, x * 10 + 10, y * 10 + 10, 0x3C2B0A);
+
+		screen->Print("Create more ants by pressing X", 20, 20, 0xffffff);
 		screen->Line(mousex - cursorSize, mousey - cursorSize, mousex + cursorSize, mousey + cursorSize, 0xff0000);
 		screen->Line(mousex - cursorSize, mousey + cursorSize, mousex + cursorSize, mousey - cursorSize, 0xff0000);
 
@@ -176,8 +238,6 @@ namespace Tmpl8
 			// 0x29B1CA -> nice cyan color for selected 
 			screen->Box(boxStartX, boxStartY, boxEndX, boxEndY, 0x29B1CA);
 
-
-
 		}
 		else doThisOnce = true;
 
@@ -196,6 +256,10 @@ namespace Tmpl8
 		for (int i = 0; i < numOfActiveAnts; i++) {
 			
 			myant[i].Move(screen);
+			if (myant[i].checkCollide(myant[i + 1].x, myant[i + 1].y)) {
+				printf("Collision! %i \n", i);
+			}
+
 
 			//displays the number of ants selected
 			if (myant[i].antSelected == true) {
@@ -233,6 +297,6 @@ namespace Tmpl8
 		//printf("Box Style %i \n", boxStyle);
 		//printf("start X: %i  start Y: %i \n", boxStartX, boxStartY);
 		//printf("end X: %i  end Y: %i \n", boxEndX, boxEndY);
-		
+
 	}
 };
