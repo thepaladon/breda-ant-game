@@ -423,15 +423,17 @@ void Sprite::Draw( Surface* a_Target, int a_X, int a_Y )
 	}
 }
 
-void Sprite::DrawScaled( int a_X, int a_Y, int a_Width, int a_Height, Surface* a_Target )
+void Sprite::DrawScaled(int a_X, int a_Y, int a_Width, int a_Height, Surface* a_Target)
 {
+	//thanks to Levi from the 3dgep.com discord server for providing this code and explaining how to upgrade it
+	int frameX = (m_Width / m_NumFrames) * m_CurrentFrame;
 	if ((a_Width == 0) || (a_Height == 0)) return;
-	for ( int x = 0; x < a_Width; x++ ) for ( int y = 0; y < a_Height; y++ )
+	for (int x = frameX, xCount = 0; x < a_Width + frameX; x++, xCount++) for (int y = 0; y < a_Height; y++)
 	{
 		int u = (int)((float)x * ((float)m_Width / (float)a_Width));
 		int v = (int)((float)y * ((float)m_Height / (float)a_Height));
 		Pixel color = GetBuffer()[u + v * m_Pitch];
-		if (color & 0xffffff) a_Target->GetBuffer()[a_X + x + ((a_Y + y) * a_Target->GetPitch())] = color;
+		if (color & 0xffffff) a_Target->GetBuffer()[a_X + xCount + ((a_Y + y) * a_Target->GetPitch())] = color;
 	}
 }
 
