@@ -20,16 +20,18 @@ namespace Tmpl8
 	bool doThisOnce = true;
 	bool destinationPlaced = false;
 	int boxStyle;
-	int numSelected = 0;
+	int numSelected;
 	int debugInt;
 	int numOfActiveAnts = 10;
 
-	Sprite ant(new Surface("assets/ant2.jpg"), 8);
 	int antSpeed = 1;
+	
+	Sprite ant(new Surface("assets/ant2scaleddown20.jpg"), 8);
 
 	class Ant
 	{
 	public:
+		
 		Ant()
 		{
 			x = IRand(1200);
@@ -39,7 +41,9 @@ namespace Tmpl8
 
 		void Move(Surface* gameScreen)
 		{
-			ant.DrawScaled(x, y , ANTSIZE, ANTSIZE, gameScreen);
+			ant.SetFrame(rotation);
+			ant.Draw(gameScreen, x, y);
+
 			destinationToMarker = sqrt(pow(x - antDestinationX, 2) + pow(y - antDestinationY, 2));
 
 			if (antSelected == true) 				
@@ -49,7 +53,7 @@ namespace Tmpl8
 			BasicPathfinding();
 		}
 
-
+		//works perfectly
 		bool checkCollide(int xTwo, int yTwo)
 		{
 			int oWidth = ANTSIZE;
@@ -84,34 +88,58 @@ namespace Tmpl8
 				antHeadingToDestination = true;
 
 			if (antHeadingToDestination == true) {
-				if (antDestinationX - (ANTSIZE / 2) >= x && antDestinationY - (ANTSIZE / 2) >= y) {
+				if (antDestinationX - (ANTSIZE / 2) > x && antDestinationY - (ANTSIZE / 2) > y) {
 					//destination in bottom right
-					ant.SetFrame(8);
+					rotation = 7;
 					debugInt = 4;
 					x += antSpeed;
 					y += antSpeed;
 				}
-				else if (antDestinationX - (ANTSIZE / 2) <= x && antDestinationY - (ANTSIZE / 2) >= y) {
+				else if (antDestinationX - (ANTSIZE / 2) < x && antDestinationY - (ANTSIZE / 2) > y) {
 					//destinaiton in bottom left
-					ant.SetFrame(7);
+					rotation = 6;
 					debugInt = 3;
 					x -= antSpeed;
 					y += antSpeed;
 				}
-				else if (antDestinationX - (ANTSIZE / 2) <= x && antDestinationY - (ANTSIZE / 2) <= y) {
+				else if (antDestinationX - (ANTSIZE / 2) < x && antDestinationY - (ANTSIZE / 2) < y) {
 					//destination in top left
-					ant.SetFrame(6);
+					rotation = 5;
 					debugInt = 2;
 					x -= antSpeed;
 					y -= antSpeed;
 
 				}
-				else if (antDestinationX - (ANTSIZE / 2) >= x && antDestinationY - (ANTSIZE / 2) <= y) {
+				else if (antDestinationX - (ANTSIZE / 2) > x && antDestinationY - (ANTSIZE / 2) < y) {
 					//destination in top right
-					ant.SetFrame(5);
+					rotation = 4;
 					debugInt = 1;
 					x += antSpeed;
 					y -= antSpeed;
+
+				}else if (antDestinationX - (ANTSIZE / 2) == x && antDestinationY - (ANTSIZE / 2) > y) {
+					//destinaiton below
+					rotation = 1;
+					debugInt = 5;
+					y += antSpeed;	
+				}
+				else if (antDestinationX - (ANTSIZE / 2) == x && antDestinationY - (ANTSIZE / 2) < y) {
+					//destination above
+					rotation = 0;
+					debugInt = 6;
+					y -= antSpeed;
+				}
+				else if (antDestinationX - (ANTSIZE / 2) > x && antDestinationY - (ANTSIZE / 2) == y) {
+					//destination to the right
+					rotation = 3;
+					debugInt = 7;
+					x += antSpeed;
+				}
+				else if (antDestinationX - (ANTSIZE / 2) < x && antDestinationY - (ANTSIZE / 2) == y) {
+					//destination to the left
+					rotation = 2;
+					debugInt = 8;
+					x -= antSpeed;
 				}
 			}
 		}
@@ -160,7 +188,8 @@ namespace Tmpl8
 			//}
 			
 		}
-
+		
+		//found out I could use vec2's here but updating it would be too time consuming 
 		int x, y, rotation; // x and y are the top right coordinates of each ants
 		int xCollisionUpRight, yCollisionUpRight;
 		bool antSelected = false;
@@ -169,33 +198,13 @@ namespace Tmpl8
 		float destinationToMarker;
 	};
 
-	bool checkCollide(int x, int y, int oWidth, int oHeight, int xTwo, int yTwo, int oTwoWidth, int oTwoHeight)
-	{
-		// AABB 1
-		int x1Min = x;
-		int x1Max = x + oWidth;
-		int y1Max = y + oHeight;
-		int y1Min = y;
-
-		// AABB 2
-		int x2Min = xTwo;
-		int x2Max = xTwo + oTwoWidth;
-		int y2Max = yTwo + oTwoHeight;
-		int y2Min = yTwo;
-
-		// Collision tests
-		if (x1Max < x2Min || x1Min > x2Max) return false;
-		if (y1Max < y2Min || y1Min > y2Max) return false;
-
-		return true;
-	}
-
-
 	Ant myant[50];
 
 	void Game::Init()
 	{
-		//do nothing
+		//for (int i = 0; i < 49; i++) {
+		//	myant->SetAntGraphic();
+		//}
 	}
 	
 	void Game::Shutdown()
@@ -209,6 +218,7 @@ namespace Tmpl8
 
 		screen->Clear(0);
 
+		//a reference map
 		for (int y = 0; y < 72; y++) // the y of the map is drawn
 			for (int x = 0; x < 128; x++) //the x of the map is drawn
 				screen->Box(x * 10, y * 10, x * 10 + 10, y * 10 + 10, 0x3C2B0A);
@@ -283,7 +293,8 @@ namespace Tmpl8
 		//doesn't work for some reason
 		if (GetAsyncKeyState(VK_LCONTROL)) {
 			Shutdown();
-			numOfActiveAnts++;
+			if(numOfActiveAnts < 49)
+				numOfActiveAnts++;
 		}
 		
 		//Basic Scene Code
@@ -295,7 +306,6 @@ namespace Tmpl8
 		{
 			screen->Print("Start Screen", 2, 2, 0xffffff);
 		}*/
-		
 
 		// DEBUG COMMANDS:
 		
