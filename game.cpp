@@ -7,7 +7,7 @@
 
 #define WIN32_LEAN_AND_MEAN
 #define ANTSIZE 20
-//if you're going to change this keep in mind that you need to move to edit 
+// if you're going to change this keep in mind that you need to move to edit 
 // the sprite by changing it to "assets/ant2scaleddown(same num as ANTSIZE).jpg"
 
 namespace Tmpl8
@@ -15,6 +15,7 @@ namespace Tmpl8
 	//Scene Manager
 	int screenSelected = 1;
 	int cursorSize = 5;
+	int timeDeltaTime;
 
 	//Box Variables
 	bool boxDrawing;
@@ -26,7 +27,7 @@ namespace Tmpl8
 	int debugInt;
 	int numOfActiveAnts = 10;
 
-	int antSpeed = 1;
+	float antSpeed = 1;
 	bool confirmation;
 
 	Sprite ant(new Surface("assets/ant2scaleddown20.jpg"), 8);
@@ -59,9 +60,15 @@ namespace Tmpl8
 			if (antSelected == true) 				
 				gameScreen->Box(x, y, x + ANTSIZE, y + ANTSIZE, 0x29B1CA);
 
-			BoxConfiguration();
+			if (destinationToMarker <= 15)
+				antHeadingToDestination = false;
+			else if (antSelected && destinationPlaced && confirmation)
+				antHeadingToDestination = true;
 
-			BasicPathfinding();
+			BoxConfiguration();
+			if (antHeadingToDestination == true) {
+				BasicPathfinding(antDestinationX, antDestinationY);
+			}
 		}
 
 		//collider check between two ants (returns true whether they collide)
@@ -91,70 +98,122 @@ namespace Tmpl8
 			return true;
 		}
 
-		void BasicPathfinding() {
+		void BasicPathfinding(int destX, int destY) {
 
-			if (destinationToMarker <= 15)
-				antHeadingToDestination = false;
+			if (destX - (ANTSIZE / 2) > x && destY - (ANTSIZE / 2) > y) {
+				//destination in bottom right
+				rotation = 7;
+				debugInt = 4;
+				x += antSpeed;
+				y += antSpeed;
+			}
+			else if (destX - (ANTSIZE / 2) < x && destY - (ANTSIZE / 2) > y) {
+				//destinaiton in bottom left
+				rotation = 6;
+				debugInt = 3;
+				x -= antSpeed;
+				y += antSpeed;
+			}
+			else if (destX - (ANTSIZE / 2) < x && destY - (ANTSIZE / 2) < y) {
+				//destination in top left
+				rotation = 5;
+				debugInt = 2;
+				x -= antSpeed;
+				y -= antSpeed;
 
-			else if (antSelected && destinationPlaced && confirmation)
-				antHeadingToDestination = true;
+			}
+			else if (destX - (ANTSIZE / 2) > x && destY - (ANTSIZE / 2) < y) {
+				//destination in top right
+				rotation = 4;
+				debugInt = 1;
+				x += antSpeed;
+				y -= antSpeed;
 
-			if (antHeadingToDestination == true) {
-				if (antDestinationX - (ANTSIZE / 2) > x && antDestinationY - (ANTSIZE / 2) > y) {
-					//destination in bottom right
-					rotation = 7;
-					debugInt = 4;
-					x += antSpeed;
-					y += antSpeed;
-				}
-				else if (antDestinationX - (ANTSIZE / 2) < x && antDestinationY - (ANTSIZE / 2) > y) {
-					//destinaiton in bottom left
-					rotation = 6;
-					debugInt = 3;
-					x -= antSpeed;
-					y += antSpeed;
-				}
-				else if (antDestinationX - (ANTSIZE / 2) < x && antDestinationY - (ANTSIZE / 2) < y) {
-					//destination in top left
-					rotation = 5;
-					debugInt = 2;
-					x -= antSpeed;
-					y -= antSpeed;
-
-				}
-				else if (antDestinationX - (ANTSIZE / 2) > x && antDestinationY - (ANTSIZE / 2) < y) {
-					//destination in top right
-					rotation = 4;
-					debugInt = 1;
-					x += antSpeed;
-					y -= antSpeed;
-
-				}else if (antDestinationX - (ANTSIZE / 2) == x && antDestinationY - (ANTSIZE / 2) > y) {
-					//destinaiton below
-					rotation = 1;
-					debugInt = 5;
-					y += antSpeed;	
-				}
-				else if (antDestinationX - (ANTSIZE / 2) == x && antDestinationY - (ANTSIZE / 2) < y) {
-					//destination above
-					rotation = 0;
-					debugInt = 6;
-					y -= antSpeed;
-				}
-				else if (antDestinationX - (ANTSIZE / 2) > x && antDestinationY - (ANTSIZE / 2) == y) {
-					//destination to the right
-					rotation = 3;
-					debugInt = 7;
-					x += antSpeed;
-				}
-				else if (antDestinationX - (ANTSIZE / 2) < x && antDestinationY - (ANTSIZE / 2) == y) {
-					//destination to the left
-					rotation = 2;
-					debugInt = 8;
-					x -= antSpeed;
-				}
+			}
+			else if (destX - (ANTSIZE / 2) == x && destY - (ANTSIZE / 2) > y) {
+				//destinaiton below
+				rotation = 1;
+				debugInt = 5;
+				y += antSpeed;	
+			}
+			else if (destX - (ANTSIZE / 2) == x && destY - (ANTSIZE / 2) < y) {
+				//destination above
+				rotation = 0;
+				debugInt = 6;
+				y -= antSpeed;
+			}
+			else if (destX - (ANTSIZE / 2) > x && destY - (ANTSIZE / 2) == y) {
+				//destination to the right
+				rotation = 3;
+				debugInt = 7;
+				x += antSpeed;
+			}
+			else if (destX - (ANTSIZE / 2) < x && destY - (ANTSIZE / 2) == y) {
+				//destination to the left
+				rotation = 2;
+				debugInt = 8;
+				x -= antSpeed;
 			}
 		}
+		
+		void AntAvoidance(int destX, int destY) {
+
+			if (destX - (ANTSIZE / 2) > x && destY - (ANTSIZE / 2) > y) {
+				//destination in bottom right
+				rotation = 7;
+				debugInt = 4;
+				x -= antSpeed;
+				y -= antSpeed;
+			}
+			else if (destX - (ANTSIZE / 2) < x && destY - (ANTSIZE / 2) > y) {
+				//destinaiton in bottom left
+				rotation = 6;
+				debugInt = 3;
+				x += antSpeed;
+				y -= antSpeed;
+			}
+			else if (destX - (ANTSIZE / 2) < x && destY - (ANTSIZE / 2) < y) {
+				//destination in top left
+				rotation = 5;
+				debugInt = 2;
+				x += antSpeed;
+				y += antSpeed;
+
+			}
+			else if (destX - (ANTSIZE / 2) > x && destY - (ANTSIZE / 2) < y) {
+				//destination in top right
+				rotation = 4;
+				debugInt = 1;
+				x -= antSpeed;
+				y += antSpeed;
+
+			}
+			else if (destX - (ANTSIZE / 2) == x && destY - (ANTSIZE / 2) > y) {
+				//destinaiton below
+				rotation = 1;
+				debugInt = 5;
+				y -= antSpeed;	
+			}
+			else if (destX - (ANTSIZE / 2) == x && destY - (ANTSIZE / 2) < y) {
+				//destination above
+				rotation = 0;
+				debugInt = 6;
+				y += antSpeed;
+			}
+			else if (destX - (ANTSIZE / 2) > x && destY - (ANTSIZE / 2) == y) {
+				//destination to the right
+				rotation = 3;
+				debugInt = 7;
+				x -= antSpeed;
+			}
+			else if (destX - (ANTSIZE / 2) < x && destY - (ANTSIZE / 2) == y) {
+				//destination to the left
+				rotation = 2;
+				debugInt = 8;
+				x += antSpeed;
+			}
+		}
+		
 
 		void BoxConfiguration() {
 			//Simple Visualisation saved in Notepad in Assets
@@ -207,7 +266,7 @@ namespace Tmpl8
 	};
 
 	//[value] -> max ants on screen
-	Ant myant[50];
+	Ant myant[500];
 
 	void Game::Init()
 	{
@@ -222,6 +281,8 @@ namespace Tmpl8
 	void Game::Tick(float deltaTime)
 	{
 		screen->Clear(0);
+
+		timeDeltaTime = timeDeltaTime + (int)deltaTime;
 
 		//a reference map
 		for (int y = 0; y < 72; y++) // the y of the map is drawn
@@ -294,15 +355,15 @@ namespace Tmpl8
 			//compares each ant of the array to the others
 			for(int z = numOfActiveAnts-1; z > i; z--) {
 
-				//if (myant[i].checkCollide(myant[z].x, myant[z].y))
-					//printf("Collision between ant %i and %i \n", i, z);
-
+				if (myant[i].checkCollide(myant[z].x, myant[z].y))
+					myant[i].AntAvoidance(myant[z].x, myant[z].y);
+						
 				//example:
 				//myant[0] -> should check for all ants from -> 1 to 9 (numOfActiveAnts - 1 ) ;
 				//myant[3] -> should check for all ants from -> 4 to 9 (numOfActiveAnts - 1 ) ;
 			}
 
-			//displays the number of ants selected
+			//counts the number of ants selected
 			if (myant[i].antSelected == true) {
 				if (!myant[i].countedThisAntAlready) {
 					numSelected += 1;
@@ -314,7 +375,7 @@ namespace Tmpl8
 		//doesn't work for some reason
 		if (GetAsyncKeyState(VK_LCONTROL)) {
 			Shutdown();
-			if(numOfActiveAnts < 49)
+			if(numOfActiveAnts < 499)
 				numOfActiveAnts++;
 		}
 		
@@ -330,6 +391,7 @@ namespace Tmpl8
 
 		// DEBUG COMMANDS:
 		
+		printf("deltaTime %i \n", timeDeltaTime);
 		//printf("%i" , myant[1].antSelected);
 		//printf("direction: %i \n", debugInt);
 		//printf("antDir: %i %i \n", antDestinationX, antDestinationY);
