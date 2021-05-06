@@ -1,12 +1,14 @@
 #include "game.h"
 #include "surface.h"
-#include <cstdio> 
-
-#include <windows.h>
 #include "template.h"
+
+#include <cstdio> 
+#include <windows.h>
 
 #define WIN32_LEAN_AND_MEAN
 #define ANTSIZE 20
+//if you're going to change this keep in mind that you need to move to edit 
+// the sprite by changing it to "assets/ant2scaleddown(same num as ANTSIZE).jpg"
 
 namespace Tmpl8
 {
@@ -15,8 +17,8 @@ namespace Tmpl8
 	int cursorSize = 5;
 
 	//Box Variables
+	bool boxDrawing;
 	int boxStartX, boxStartY, boxEndX, boxEndY;
-	int antDestinationX, antDestinationY;
 	bool doThisOnce = true;
 	bool destinationPlaced = false;
 	int boxStyle;
@@ -25,7 +27,8 @@ namespace Tmpl8
 	int numOfActiveAnts = 10;
 
 	int antSpeed = 1;
-	
+	bool confirmation;
+
 	Sprite ant(new Surface("assets/ant2scaleddown20.jpg"), 8);
 
 	class Ant
@@ -34,26 +37,34 @@ namespace Tmpl8
 		
 		Ant()
 		{
+			//init values
 			x = IRand(1200);
 			y = IRand(700);
 			rotation = 0;
+			bool antSelected = false;
+			bool countedThisAntAlready = false;
+			bool antHeadingToDestination = false;
 		}
 
 		void Move(Surface* gameScreen)
 		{
+			//drawing the ant
 			ant.SetFrame(rotation);
 			ant.Draw(gameScreen, x, y);
-
+			
+			//formula for calculating distance between two points
 			destinationToMarker = sqrt(pow(x - antDestinationX, 2) + pow(y - antDestinationY, 2));
 
+			//draws blue outline for selected ants
 			if (antSelected == true) 				
 				gameScreen->Box(x, y, x + ANTSIZE, y + ANTSIZE, 0x29B1CA);
 
 			BoxConfiguration();
+
 			BasicPathfinding();
 		}
 
-		//works perfectly
+		//collider check between two ants (returns true whether they collide)
 		bool checkCollide(int xTwo, int yTwo)
 		{
 			int oWidth = ANTSIZE;
@@ -82,9 +93,10 @@ namespace Tmpl8
 
 		void BasicPathfinding() {
 
-			if (destinationToMarker <= 10)
+			if (destinationToMarker <= 15)
 				antHeadingToDestination = false;
-			else if (antSelected && destinationPlaced)
+
+			else if (antSelected && destinationPlaced && confirmation)
 				antHeadingToDestination = true;
 
 			if (antHeadingToDestination == true) {
@@ -147,39 +159,34 @@ namespace Tmpl8
 		void BoxConfiguration() {
 			//Simple Visualisation saved in Notepad in Assets
 			//box dragged to top left
-			if (boxStartX < boxEndX && boxStartY > boxEndY) {
-				boxStyle = 2;
-				if (x > boxStartX && y < boxStartY && x < boxEndX && y > boxEndY) {
-					antSelected = true;
+			if (boxDrawing) {
+				if (boxStartX < boxEndX && boxStartY > boxEndY) {
+					boxStyle = 2;
+					if (x > boxStartX && y < boxStartY && x < boxEndX && y > boxEndY) {
+						antSelected = true;
+					}
 				}
-				else antSelected = false;
-			}
 
-			//box dragged to bottom right
-			 if (boxStartX > boxEndX && boxStartY < boxEndY) {
-				boxStyle = 4;
-				if (x < boxStartX && y > boxStartY && x > boxEndX && y < boxEndY)
-					antSelected = true;
+				//box dragged to bottom right
+				if (boxStartX > boxEndX && boxStartY < boxEndY) {
+					boxStyle = 4;
+					if (x < boxStartX && y > boxStartY && x > boxEndX && y < boxEndY)
+						antSelected = true;
+				}
 
-				else antSelected = false;
-			}
+				//box dragged to bottom left
+				if (boxStartX > boxEndX && boxStartY > boxEndY) {
+					boxStyle = 3;
+					if (x < boxStartX && y < boxStartY && x > boxEndX && y > boxEndY)
+						antSelected = true;
+				}
 
-			//box dragged to bottom left
-			if (boxStartX > boxEndX && boxStartY > boxEndY) {
-				boxStyle = 3;
-				if (x < boxStartX && y < boxStartY && x > boxEndX && y > boxEndY)
-					antSelected = true;
-
-				else antSelected = false;
-			}
-
-			//box dragged to top left
-			if (boxStartX < boxEndX && boxStartY < boxEndY) {
-				boxStyle = 1;
-				if (x > boxStartX && y > boxStartY && x < boxEndX && y < boxEndY)
-					antSelected = true;
-
-				else antSelected = false;
+				//box dragged to top left
+				if (boxStartX < boxEndX && boxStartY < boxEndY) {
+					boxStyle = 1;
+					if (x > boxStartX && y > boxStartY && x < boxEndX && y < boxEndY)
+						antSelected = true;
+				}
 			}
 
 			//void AntMove()
@@ -192,19 +199,19 @@ namespace Tmpl8
 		//found out I could use vec2's here but updating it would be too time consuming 
 		int x, y, rotation; // x and y are the top right coordinates of each ants
 		int xCollisionUpRight, yCollisionUpRight;
-		bool antSelected = false;
-		bool countedThisAntAlready = false;
-		bool antHeadingToDestination = false;
+		int antDestinationX, antDestinationY;
+		bool antSelected;
+		bool countedThisAntAlready;
+		bool antHeadingToDestination;
 		float destinationToMarker;
 	};
 
+	//[value] -> max ants on screen
 	Ant myant[50];
 
 	void Game::Init()
 	{
-		//for (int i = 0; i < 49; i++) {
-		//	myant->SetAntGraphic();
-		//}
+		//do nothing
 	}
 	
 	void Game::Shutdown()
@@ -214,8 +221,6 @@ namespace Tmpl8
 
 	void Game::Tick(float deltaTime)
 	{
-
-
 		screen->Clear(0);
 
 		//a reference map
@@ -229,6 +234,7 @@ namespace Tmpl8
 
 		if (GetAsyncKeyState(VK_LBUTTON))
 		{
+			boxDrawing = true;
 			if (doThisOnce == true) {
 				//start coords of the box
 				boxStartX = mousex;
@@ -236,7 +242,7 @@ namespace Tmpl8
 				
 				for (int n = 0; n < numOfActiveAnts; n++) {
 					myant[n].antSelected = false;
-					myant[n].countedThisAntAlready= false;
+					myant[n].countedThisAntAlready = false;
 				}
 				
 				numSelected = 0;
@@ -251,18 +257,33 @@ namespace Tmpl8
 			screen->Box(boxStartX, boxStartY, boxEndX, boxEndY, 0x29B1CA);
 
 		}
-		else doThisOnce = true;
+		else { doThisOnce = true; boxDrawing = false; }
 
 		if (GetAsyncKeyState(VK_RBUTTON) && numSelected > 0) {
+		
+			for (int n = 0; n < numOfActiveAnts; n++) {
+				if (myant[n].antSelected) {
+					myant[n].antDestinationX = mousex;
+					myant[n].antDestinationY = mousey;
+				}
+			}
+
 			destinationPlaced = true;
-			antDestinationX = mousex;
-			antDestinationY = mousey;
+			confirmation = true;
+			
 		}
+		else confirmation = false;
+
 
 		//fix this so it only appeared when there is more that 1 ant selected at the moment and make the ants travel towards it
 		if (destinationPlaced && numSelected > 0) {
-			screen->Line(antDestinationX - cursorSize, antDestinationY - cursorSize, antDestinationX + cursorSize, antDestinationY + cursorSize, 0x29B1CA);
-			screen->Line(antDestinationX - cursorSize, antDestinationY + cursorSize, antDestinationX + cursorSize, antDestinationY - cursorSize, 0x29B1CA);
+			for (int n = 0; n < numOfActiveAnts; n++) {
+				if (myant[n].antSelected) {
+
+					screen->Line(myant[n].antDestinationX - cursorSize, myant[n].antDestinationY - cursorSize, myant[n].antDestinationX + cursorSize, myant[n].antDestinationY + cursorSize, 0x29B1CA);
+					screen->Line(myant[n].antDestinationX - cursorSize, myant[n].antDestinationY + cursorSize, myant[n].antDestinationX + cursorSize, myant[n].antDestinationY - cursorSize, 0x29B1CA);
+				}
+			}
 		}
 		
 		//goes through the class array and executes something for each ant
@@ -273,8 +294,8 @@ namespace Tmpl8
 			//compares each ant of the array to the others
 			for(int z = numOfActiveAnts-1; z > i; z--) {
 
-				if (myant[i].checkCollide(myant[z].x, myant[z].y))
-					printf("Collision between ant %i and %i \n", i, z);
+				//if (myant[i].checkCollide(myant[z].x, myant[z].y))
+					//printf("Collision between ant %i and %i \n", i, z);
 
 				//example:
 				//myant[0] -> should check for all ants from -> 1 to 9 (numOfActiveAnts - 1 ) ;
@@ -309,6 +330,7 @@ namespace Tmpl8
 
 		// DEBUG COMMANDS:
 		
+		//printf("%i" , myant[1].antSelected);
 		//printf("direction: %i \n", debugInt);
 		//printf("antDir: %i %i \n", antDestinationX, antDestinationY);
 		//printf("antCoords: %i %i \n", myant[1].x, myant[1].y);
