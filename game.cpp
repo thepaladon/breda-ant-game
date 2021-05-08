@@ -29,7 +29,7 @@ namespace Tmpl8
 
 	//Ant Variables
 	int startingNumAnts;
-	float antSpeed = 1;
+	int antSpeed = 1;
 	int distanceToObjToStop = 10;
 	bool confirmation;
 	Sprite ant(new Surface("assets/ant2scaleddown10.jpg"), 8);
@@ -160,7 +160,7 @@ namespace Tmpl8
 			return true;
 		}
 
-		void BestPossiblePathCheck() {
+	/*	void BestPossiblePathCheck() {
 			float testCase[8];
 			float minValue = 1000;
 			int shotestToDest;
@@ -183,7 +183,7 @@ namespace Tmpl8
 			 }
 
 			 bestDecision = shotestToDest;
-		}
+		}*/
 
 		void BasicPathfinding(int destX, int destY) {
 
@@ -437,8 +437,8 @@ namespace Tmpl8
 	{
 		for (int i = 0; i < 100; i++) {
 			if (i < numOfActiveAnts) {
-				myant[i].x = Rand(710);
-				myant[i].y = Rand(710);
+				myant[i].x = IRand(710);
+				myant[i].y = IRand(710);
 			}
 			else {
 				myant[i].x = rand() % mybuilding.x_width + mybuilding.x;
