@@ -6,7 +6,7 @@
 #include <windows.h>
 
 #define WIN32_LEAN_AND_MEAN
-#define ANTSIZE 20
+#define ANTSIZE 10
 // if you're going to change this keep in mind that you need to move to edit 
 // the sprite by changing it to "assets/ant2scaleddown(same num as ANTSIZE).jpg"
 
@@ -25,27 +25,74 @@ namespace Tmpl8
 	int boxStyle;
 	int numSelected;
 	int debugInt;
-	int numOfActiveAnts = 10;
+	int numOfActiveAnts = 20;
 
 	//Ant Variables
+	int startingNumAnts;
 	float antSpeed = 1;
 	int distanceToObjToStop = 10;
 	bool confirmation;
-	Sprite ant(new Surface("assets/ant2scaleddown20.jpg"), 8);
+	Sprite ant(new Surface("assets/ant2scaleddown10.jpg"), 8);
+
+	class Building
+	{
+	public:
+
+		Building()
+		{
+			x = 310;
+			y = 310;
+			x_width = 50;
+			y_height = 50;
+		}
+
+		void BuildingCode(Surface* gameScreen)
+		{
+			DrawBuilding(gameScreen);
+			
+		}
+		
+		//drawing the building
+		void DrawBuilding(Surface* gameScreen) {
+			for (int i = 1; i <= 50; i+=10) {
+				gameScreen->Box(x + i , y + i, x + x_width  - i, y + y_height - i , 0xB00B69);
+			}
+
+			if (buildingSelected)
+				gameScreen->Box(x-1, y-1, x + x_width+1, y + y_height+1, 0x29B1CA);
+		}
+
+		bool CheckIfMouseOnBuilding(int mousex, int mousey) {
+			if (x < mousex && mousex < (x + x_width) && y < mousey && mousey < (y + y_height)) {
+				return true;
+			}else return false;
+		}
+
+		int x, y; // x and y are the top right coordinates of each ants
+		int x_width, y_height;
+		bool buildingSelected;
+		bool antSpawnMarkerPlaced;
+		int xAntSpawnMarker, yAntSpawnMarker;
+	};
+	
+
 
 	class Ant
 	{
 	public:
 		
-		Ant()
+		Ant() //init values
 		{
-			//init values
 			x = IRand(1200);
 			y = IRand(700);
 			rotation = 0;
-			bool antSelected = false;
-			bool countedThisAntAlready = false;
-			bool antHeadingToDestination = false;
+			antDestinationX = 0;
+			antDestinationY = 0;
+			antSelected = false;
+			countedThisAntAlready = false;
+			antHeadingToDestination = false;
+			bestDecision = 0;
+			distanceToMarker = 0;
 		}
 
 		void Move(Surface* gameScreen)
@@ -58,8 +105,10 @@ namespace Tmpl8
 			distanceToMarker = sqrt(pow(x - antDestinationX, 2) + pow(y - antDestinationY, 2));
 
 			//draws blue outline for selected ants
-			if (antSelected == true) 				
+
+			if (antSelected)
 				gameScreen->Box(x, y, x + ANTSIZE, y + ANTSIZE, 0x29B1CA);
+
 
 			if (distanceToMarker <= distanceToObjToStop)
 				antHeadingToDestination = false;
@@ -80,15 +129,17 @@ namespace Tmpl8
 				//and then have the ant take the same path as the line
 				//I am not sure how to do that though
 			}
+
+			KeepAntsInMap();
 		}
 
 		//collider check between two ants (returns true whether they collide)
-		bool checkCollide(int xTwo, int yTwo)
+		bool checkCollideBetweenAnts(int xTwo, int yTwo, int TwoWidth, int TwoHeight)
 		{
 			int oWidth = ANTSIZE;
 			int oHeight = ANTSIZE;
-			int oTwoWidth = ANTSIZE;
-			int oTwoHeight = ANTSIZE;
+			int oTwoWidth = TwoWidth;
+			int oTwoHeight = TwoHeight;
 
 			// AABB 1
 			int x1Min = x;
@@ -347,24 +398,55 @@ namespace Tmpl8
 			//}
 			
 		}
+
+		void KeepAntsInMap() {
+			if (x <= 0) {
+				x = 0;
+			}
+
+			if (x >= 720 - ANTSIZE) {
+				x = 720 - ANTSIZE;
+			}
+
+			if (y <= 0) {
+				y = 0;
+			}
+
+			if (y >= 720 - ANTSIZE) {
+				y = 720 - ANTSIZE;
+			}
+		}
 		
 		//found out I could use vec2's here but updating it would be too time consuming 
 		int x, y, rotation; // x and y are the top right coordinates of each ants
-		int xCollisionUpRight, yCollisionUpRight;
+		//int xCollisionUpRight, yCollisionUpRight;
 		int antDestinationX, antDestinationY;
 		bool antSelected;
 		bool countedThisAntAlready;
 		bool antHeadingToDestination;
+		bool isSpawnedAnt;
 		float distanceToMarker;
 		int bestDecision;
 	};
 
 	//[value] -> max ants on screen
-	Ant myant[500];
+	Ant myant[100];
+	Building mybuilding;
 
 	void Game::Init()
 	{
-		//do nothing
+		for (int i = 0; i < 100; i++) {
+			if (i < numOfActiveAnts) {
+				myant[i].x = Rand(710);
+				myant[i].y = Rand(710);
+			}
+			else {
+				myant[i].x = rand() % mybuilding.x_width + mybuilding.x;
+				myant[i].y = rand() % mybuilding.y_height + mybuilding.y;
+			}
+
+			//if(i < 100 - numOfActiveAnts)
+		}
 	}
 	
 	void Game::Shutdown()
@@ -379,8 +461,9 @@ namespace Tmpl8
 		timeDeltaTime = timeDeltaTime + (int)deltaTime;
 
 		//a reference map
-		for (int y = 0; y < 72; y++) // the y of the map is drawn
-			for (int x = 0; x < 128; x++) //the x of the map is drawn
+		for (int y = 0; y < 72; y++)		// the y of the map is drawn
+			for (int x = 0; x < 72; x++)	// the x of the map is drawn
+				//box is 10x10
 				screen->Box(x * 10, y * 10, x * 10 + 10, y * 10 + 10, 0x3C2B0A);
 
 		screen->Print("Create more ants by pressing CTRL", 20, 20, 0xffffff);
@@ -389,6 +472,7 @@ namespace Tmpl8
 
 		if (GetAsyncKeyState(VK_LBUTTON))
 		{
+
 			boxDrawing = true;
 			if (doThisOnce == true) {
 				//start coords of the box
@@ -396,11 +480,19 @@ namespace Tmpl8
 				boxStartY = mousey;
 				
 				for (int n = 0; n < numOfActiveAnts; n++) {
-					myant[n].antSelected = false;
+					myant[n].antSelected = false; //ant deselector
 					myant[n].countedThisAntAlready = false;
 				}
 				
 				numSelected = 0;
+				mybuilding.buildingSelected = false; //building deselector
+
+
+				if (mybuilding.CheckIfMouseOnBuilding(mousex, mousey)) {
+					mybuilding.buildingSelected = true;
+				}
+
+				//this needs to be last
 				doThisOnce = false;
 			}
 			//end coords of the box
@@ -411,36 +503,52 @@ namespace Tmpl8
 			// 0x29B1CA -> nice cyan color for selected 
 			screen->Box(boxStartX, boxStartY, boxEndX, boxEndY, 0x29B1CA);
 
+			
 		}
 		else { doThisOnce = true; boxDrawing = false; }
 
-		if (GetAsyncKeyState(VK_RBUTTON) && numSelected > 0) {
-		
-			for (int n = 0; n < numOfActiveAnts; n++) {
-				if (myant[n].antSelected) {
-					myant[n].antDestinationX = mousex;
-					myant[n].antDestinationY = mousey;
+		if (GetAsyncKeyState(VK_RBUTTON)) {
+
+			if (numSelected > 0) {
+				for (int n = 0; n < numOfActiveAnts; n++) {
+					if (myant[n].antSelected) {
+						myant[n].antDestinationX = mousex;
+						myant[n].antDestinationY = mousey;
+					}
 				}
 			}
 
 			destinationPlaced = true;
 			confirmation = true;
+
+			if (mybuilding.buildingSelected) {
+				mybuilding.xAntSpawnMarker = mousex;
+				mybuilding.yAntSpawnMarker = mousey;
+				mybuilding.antSpawnMarkerPlaced = true;
+			}
 			
 		}
 		else confirmation = false;
 
+		mybuilding.BuildingCode(screen);
 
 		//fix this so it only appeared when there is more that 1 ant selected at the moment and make the ants travel towards it
 		if (destinationPlaced && numSelected > 0) {
 			for (int n = 0; n < numOfActiveAnts; n++) {
 				if (myant[n].antSelected) {
 
-					screen->Line(myant[n].x + (ANTSIZE / 2), myant[n].y + (ANTSIZE / 2), myant[n].antDestinationX, myant[n].antDestinationY, 0xB00B69);
+				//	screen->Line(myant[n].x + (ANTSIZE / 2), myant[n].y + (ANTSIZE / 2), myant[n].antDestinationX, myant[n].antDestinationY, 0xB00B69);
 					screen->Line(myant[n].antDestinationX - cursorSize, myant[n].antDestinationY - cursorSize, myant[n].antDestinationX + cursorSize, myant[n].antDestinationY + cursorSize, 0x29B1CA);
 					screen->Line(myant[n].antDestinationX - cursorSize, myant[n].antDestinationY + cursorSize, myant[n].antDestinationX + cursorSize, myant[n].antDestinationY - cursorSize, 0x29B1CA);
 				}
 			}
 		}
+
+		//marker for building destination (I don't have the energy to think up a solution to that at the moment)
+	/*	if (mybuilding.antSpawnMarkerPlaced && mybuilding.buildingSelected) {
+			screen->Line(mybuilding.xAntSpawnMarker - cursorSize, mybuilding.yAntSpawnMarker - cursorSize, mybuilding.xAntSpawnMarker + cursorSize, mybuilding.yAntSpawnMarker + cursorSize, 0xB00B69);
+			screen->Line(mybuilding.xAntSpawnMarker - cursorSize, mybuilding.yAntSpawnMarker + cursorSize, mybuilding.xAntSpawnMarker + cursorSize, mybuilding.yAntSpawnMarker - cursorSize, 0xB00B69);
+		}*/
 		
 		//goes through the class array and executes something for each ant
 		for (int i = 0; i < numOfActiveAnts; i++) {
@@ -450,12 +558,13 @@ namespace Tmpl8
 			//compares each ant of the array to the others
 			for(int z = numOfActiveAnts-1; z > i; z--) {
 
-				if (myant[i].checkCollide(myant[z].x, myant[z].y))
+				if (myant[i].checkCollideBetweenAnts(myant[z].x, myant[z].y, ANTSIZE, ANTSIZE))
 					myant[i].AntAvoidance(myant[z].x, myant[z].y);
 						
 				//example:
 				//myant[0] -> should check for all ants from -> 1 to 9 (numOfActiveAnts - 1 ) ;
 				//myant[3] -> should check for all ants from -> 4 to 9 (numOfActiveAnts - 1 ) ;
+
 			}
 
 			//counts the number of ants selected
@@ -465,12 +574,15 @@ namespace Tmpl8
 					myant[i].countedThisAntAlready = true;
 				}
 			}
+
+			if (myant[i].checkCollideBetweenAnts(mybuilding.x, mybuilding.y, mybuilding.x_width, mybuilding.y_height))
+				myant[i].AntAvoidance(mybuilding.x, mybuilding.y);
 		}
 
 		//doesn't work for some reason
 		if (GetAsyncKeyState(VK_LCONTROL)) {
 			Shutdown();
-			if(numOfActiveAnts < 499)
+			if(numOfActiveAnts < 99)
 				numOfActiveAnts++;
 		}
 		
@@ -486,7 +598,7 @@ namespace Tmpl8
 
 		// DEBUG COMMANDS:
 		
-		printf("deltaTime %i \n", timeDeltaTime);
+		//printf(" %i", mybuilding.CheckIfMouseOnBuilding(mousex, mousey));
 		//printf("%i" , myant[1].antSelected);
 		//printf("direction: %i \n", debugInt);
 		//printf("antDir: %i %i \n", antDestinationX, antDestinationY);
