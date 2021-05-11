@@ -12,12 +12,18 @@
 
 namespace Tmpl8
 {
-	//Scene Manager
-	int lifePoints = 20;
+	//Gameplay Variables
+	int lifePoints = 50;
+	int displayScore;
 	int screenSelected = 1;
+	int resourceAmount = 1000;
 	int cursorSize = 7;
-	int timeDeltaTime; //simple timer
+	
 
+	//Time Variables
+	int timeDeltaTime; //simple timer
+	int setTimer;
+	bool isReset;
 
 	//Input Variables
 	bool confirmation;
@@ -90,8 +96,8 @@ namespace Tmpl8
 
 		Ant() //init values
 		{
-			x = IRand(710);
-			y = IRand(710);
+			x = rand() % 325 + 200;
+			y = rand() % 325 + 200;
 			rotation = 0;
 			antDestinationX = 0;
 			antDestinationY = 0;
@@ -435,8 +441,8 @@ namespace Tmpl8
 		}
 
 		void InitAnt() {
-			x = 310;
-			y = 310;
+			x = rand() %150 + 250;
+			y = rand() %150 + 250;
 			isSpawnedAnt = true;
 		}
 
@@ -486,8 +492,12 @@ namespace Tmpl8
 			//drawing the ant
 			enemyAnt.SetFrame(rotation);
 			enemyAnt.Draw(gameScreen, x, y);
+			int delay = rand() % 40;
 
-			BasicPathfinding(antDestinationX, antDestinationY);
+			if (delay <= 5) {
+				BasicPathfinding(antDestinationX, antDestinationY);
+			}
+			
 		}
 
 		void RandomizeNewSpawn() {
@@ -519,10 +529,62 @@ namespace Tmpl8
 		int whereToSpawn;
 	};
 
+	class Resource
+	{
+	public:
+		Resource() {
+			x = rand() % 710;
+			y = rand() % 710;
+
+			x_width = rand() % 5 + 5;
+			y_height = rand() % 5 + 5;
+
+			pelletValue = (x_width + y_height) * 100;
+		}
+
+		void DrawPellet(Surface* gameScreen) {
+			gameScreen->Box(x, y, x + x_width, y + y_height, 0xffffff);
+		}
+
+		void ReInit() {
+			x = rand() % 710;
+			y = rand() % 710;
+
+			x_width = rand() % 5 + 5;
+			y_height = rand() % 5 + 5;
+		}
+
+		int x, y;
+		int x_width, y_height;
+		int pelletValue;
+	};
+
+
 	//declaring values
 	Ant myant[100];
-	EnemyAnt myenemyant[10];
+	EnemyAnt myenemyant[15];
 	Building mybuilding;
+	Resource myresource[5];
+
+	//Credit to @Themperror#1986 for providing me with this code and helping me understand it
+	void PrintToScreenFormatted(Surface* screen, int x1, int y1, Pixel color, char* format, ...)
+	{
+		va_list list;
+		va_start(list, format);
+		int count = vsnprintf(nullptr, 0, format, list);
+		thread_local char* buf = nullptr;
+		thread_local int bufLen = 0;
+		if (buf == nullptr || bufLen < count)
+		{
+			if (buf != nullptr) free(buf);
+			bufLen = count * 3;
+			buf = static_cast<char*>(malloc(bufLen));
+		}
+		memset(buf, 0, bufLen);
+		vsnprintf(buf, bufLen, format, list);
+		va_end(list);
+		screen->Print(buf, x1, y1, color);
+	}
 
 	void Game::Init()
 	{
@@ -549,12 +611,24 @@ namespace Tmpl8
 			timeDeltaTime = timeDeltaTime + (int)deltaTime;
 
 			//a reference map
-			for (int y = 0; y < 72; y++)		// the y of the map is drawn
-				for (int x = 0; x < 72; x++)	// the x of the map is drawn
-					//box is 10x10
-					screen->Box(x * 10, y * 10, x * 10 + 10, y * 10 + 10, 0x3C2B0A);
+			//for (int y = 0; y < 72; y++)		// the y of the map is drawn
+			//	for (int x = 0; x < 72; x++)	// the x of the map is drawn
+			//		//box is 10x10
+			//		screen->Box(x * 10, y * 10, x * 10 + 10, y * 10 + 10, 0x3C2B0A);
+
+			screen->Box(0, 0, 720, 720, 0x3C2B0A);
 
 			screen->Print("Create more ants by pressing CTRL", 20, 20, 0xffffff);
+			
+			//Draws the Life Container
+			screen->Print("LIFE OF BASE", 730, 20, 0xffffff);
+			for (int i=0; i <= lifePoints; i++) {
+				screen->Line(730 + i * 5, 30, 730 + i * 5, 40, 0xff0000);
+			}
+
+			PrintToScreenFormatted(screen, 730, 50, 0xffffff, "SCORE: %i", displayScore);
+			PrintToScreenFormatted(screen, 730, 60, 0xffffff, "RESOURCE AMOUNT: %i", resourceAmount);
+
 
 			if (GetAsyncKeyState(VK_LBUTTON))
 			{
@@ -614,8 +688,6 @@ namespace Tmpl8
 			}
 			else confirmation = false;
 
-			mybuilding.BuildingCode(screen);
-
 			//fix this so it only appeared when there is more that 1 ant selected at the moment and make the ants travel towards it
 			if (destinationPlaced && numSelected > 0) {
 				for (int n = 0; n < 100; n++) {
@@ -629,12 +701,15 @@ namespace Tmpl8
 			}
 
 			//marker for building destination (I don't have the energy to think up a solution to that at the moment)
-		/*	if (mybuilding.antSpawnMarkerPlaced && mybuilding.buildingSelected) {
+			if (mybuilding.antSpawnMarkerPlaced && mybuilding.buildingSelected) {
 				screen->Line(mybuilding.xAntSpawnMarker - cursorSize, mybuilding.yAntSpawnMarker - cursorSize, mybuilding.xAntSpawnMarker + cursorSize, mybuilding.yAntSpawnMarker + cursorSize, 0xB00B69);
 				screen->Line(mybuilding.xAntSpawnMarker - cursorSize, mybuilding.yAntSpawnMarker + cursorSize, mybuilding.xAntSpawnMarker + cursorSize, mybuilding.yAntSpawnMarker - cursorSize, 0xB00B69);
-			}*/
+			}
 
-			//goes through the class array and executes something for each ant
+			//code for drawing the BUILDING class
+			mybuilding.BuildingCode(screen);
+
+			//goes through the class array and executes something for each PLAYER ant
 			for (int i = 0; i < 100; i++) {
 
 				myant[i].AntCode(screen);
@@ -650,6 +725,15 @@ namespace Tmpl8
 					//myant[0] -> should check for all ants from -> 1 to 9 (numOfActiveAnts - 1 ) ;
 					//myant[3] -> should check for all ants from -> 4 to 9 (numOfActiveAnts - 1 ) ;
 
+				}
+				if (myant[i].isSpawnedAnt) {
+					for (int z = 0; z < 5; z++) {
+						if (myant[i].checkCollideBetweenAnts(myresource[z].x, myresource[z].y, myresource[z].x_width, myresource[z].y_height))
+						{
+							myresource[z].ReInit();
+							resourceAmount += myresource[z].pelletValue;
+						}
+					}
 				}
 
 				//counts the number of ants selected
@@ -675,16 +759,12 @@ namespace Tmpl8
 				}
 			}
 
+			//goes through the class array and executes something for each ENEMY ant
+			for (int i = 0; i < 15; i++) {
 
-			for (int i = 0; i < 10; i++) {
-				myenemyant[i].EnemyAntCode(screen);
-			}
+				for (int z = 15 - 1; z > i; z--) {
 
-			for (int i = 0; i < 10; i++) {
-
-				for (int z = 100 - 1; z > i; z--) {
-
-					if (myenemyant[i].checkCollideBetweenAnts(myenemyant[z].x, myenemyant[z].y, ANTSIZE, ANTSIZE))
+					if(myenemyant[i].checkCollideBetweenAnts(myenemyant[z].x, myenemyant[z].y, ANTSIZE, ANTSIZE))
 						myenemyant[i].AntAvoidance(myenemyant[z].x, myenemyant[z].y);
 				}
 
@@ -694,6 +774,7 @@ namespace Tmpl8
 						if (myant[n].isSpawnedAnt) {
 							myenemyant[i].RandomizeNewSpawn();
 							myant[n].isSpawnedAnt = false;
+							displayScore += 100;
 						}
 					}
 				}
@@ -704,25 +785,49 @@ namespace Tmpl8
 					lifePoints-= 1;
 				}
 
-				printf("Enemy ant %i: x %i  y %i \n", i, myenemyant[i].x, myenemyant[i].y);
+				myenemyant[i].EnemyAntCode(screen);
+
+				//printf("Enemy ant %i: x %i  y %i \n", i, myenemyant[i].x, myenemyant[i].y);
 			}
 
+			//goes through the class array and executes something for each RESOURCE PALLET
+			for (int i = 0; i < 5; i++) {
+				myresource[i].DrawPellet(screen);
+			}
+
+			//this will probably be the code snippet that I present
 			if (GetAsyncKeyState(VK_LCONTROL)) {
-				if (numOfActiveAnts < 1000)
+				if (numOfActiveAnts < 100 && isReset && resourceAmount >= 100) {
 					for (int i = 0; i < 100; i++)
 					{
 						if (!myant[i].isSpawnedAnt) {
+
+							if (mybuilding.antSpawnMarkerPlaced) {
+								myant[i].antDestinationX = mybuilding.xAntSpawnMarker;
+								myant[i].antDestinationY = mybuilding.yAntSpawnMarker;
+								myant[i].antHeadingToDestination = true;
+							}
+
 							myant[i].InitAnt();
+							resourceAmount -= 100;
 							i = 100;
+							setTimer = timeDeltaTime + 100; // 0.1 seconds delay between spawning ants so it doesn't spawn them every frame
+
 						}
 					}
+				}
 			}
+
+			if (setTimer < timeDeltaTime) {
+				isReset = true;
+			}
+			else isReset = false;
 
 			if (lifePoints <= 0) {
 				screenSelected = 2;
 			}
 
-			Sleep(3);
+			Sleep(10);
 		}
 
 		if (screenSelected != 1) {
