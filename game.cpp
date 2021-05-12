@@ -83,11 +83,37 @@ namespace Tmpl8
 			else return false;
 		}
 
+		void setSpawnMarker(int xmark, int ymark) {
+			xAntSpawnMarker = xmark;
+			yAntSpawnMarker = ymark;
+		}
+
+		void markerIsPlaced() {
+			antSpawnMarkerPlaced = true;
+		}
+
+		void SetStatusOfBuilding(bool select) {
+			buildingSelected = select;
+		}
+
+		int getX() const { return x; }
+		int getY() const { return y; }
+
+		int getWidth() const { return x_width; }
+		int getHeight() const { return y_height; }
+
+		int getSpwnMarkX() const { return xAntSpawnMarker;  }
+		int getSpwnMarkY() const { return yAntSpawnMarker;  }
+
+		bool isMarkerPlaced() const { return antSpawnMarkerPlaced; }
+		bool isBuildingSelected() const { return buildingSelected; }
+
+	private:
 		int x, y; // x and y are the top right coordinates of each ants
 		int x_width, y_height;
-		bool buildingSelected;
-		bool antSpawnMarkerPlaced;
 		int xAntSpawnMarker, yAntSpawnMarker;
+		bool antSpawnMarkerPlaced;
+		bool buildingSelected;
 	};
 
 	class Ant
@@ -465,8 +491,8 @@ namespace Tmpl8
 		}
 
 		void TakeAntToBuildingSpawnPoint(Building& bld) {
-			antDestinationX = bld.xAntSpawnMarker;
-			antDestinationY = bld.yAntSpawnMarker;
+			antDestinationX = bld.getSpwnMarkX();
+			antDestinationY = bld.getSpwnMarkY();
 			antHeadingToDestination = true;
 		}
 
@@ -550,6 +576,8 @@ namespace Tmpl8
 			else if (whereToSpawn == 4)
 				setCoords(710, rand() % 710); //right
 		}
+
+	private:
 		int whereToSpawn;
 	};
 
@@ -577,7 +605,16 @@ namespace Tmpl8
 			x_width = rand() % 5 + 5;
 			y_height = rand() % 5 + 5;
 		}
+		
+		int getX() const { return x; }
+		int getY() const { return y; }
 
+		int getWidth() const { return x_width; }
+		int getHeight() const { return y_height; }
+
+		int getPelletValue() const { return pelletValue; }
+
+	private:
 		int x, y;
 		int x_width, y_height;
 		int pelletValue;
@@ -707,10 +744,10 @@ namespace Tmpl8
 					}
 
 					numSelected = 0;
-					mybuilding.buildingSelected = false; //building deselector
+					mybuilding.SetStatusOfBuilding(false); //building deselector
 
 					if (mybuilding.CheckIfMouseOnBuilding(mousex, mousey)) {
-						mybuilding.buildingSelected = true;
+						mybuilding.SetStatusOfBuilding(true);
 					}
 
 					//this needs to be last
@@ -739,10 +776,9 @@ namespace Tmpl8
 				destinationPlaced = true;
 				confirmation = true;
 
-				if (mybuilding.buildingSelected) {
-					mybuilding.xAntSpawnMarker = mousex;
-					mybuilding.yAntSpawnMarker = mousey;
-					mybuilding.antSpawnMarkerPlaced = true;
+				if (mybuilding.isBuildingSelected()) {
+					mybuilding.setSpawnMarker(mousex, mousey);
+					mybuilding.markerIsPlaced();
 				}
 
 			}
@@ -761,9 +797,9 @@ namespace Tmpl8
 			}
 
 			//marker for building destination (I don't have the energy to think up a solution to that at the moment)
-			if (mybuilding.antSpawnMarkerPlaced && mybuilding.buildingSelected) {
-				screen->Line(float(mybuilding.xAntSpawnMarker - cursorSize), float(mybuilding.yAntSpawnMarker - cursorSize), float(mybuilding.xAntSpawnMarker + cursorSize), float(mybuilding.yAntSpawnMarker + cursorSize), 0xB00B69);
-				screen->Line(float(mybuilding.xAntSpawnMarker - cursorSize), float(mybuilding.yAntSpawnMarker + cursorSize), float(mybuilding.xAntSpawnMarker + cursorSize), float(mybuilding.yAntSpawnMarker - cursorSize), 0xB00B69);
+			if (mybuilding.isMarkerPlaced() && mybuilding.isBuildingSelected()) {
+				screen->Line(float(mybuilding.getSpwnMarkX() - cursorSize), float(mybuilding.getSpwnMarkY() - cursorSize), float(mybuilding.getSpwnMarkX() + cursorSize), float(mybuilding.getSpwnMarkY() + cursorSize), 0xB00B69);
+				screen->Line(float(mybuilding.getSpwnMarkX() - cursorSize), float(mybuilding.getSpwnMarkY() + cursorSize), float(mybuilding.getSpwnMarkX() + cursorSize), float(mybuilding.getSpwnMarkY() - cursorSize), 0xB00B69);
 			}
 
 			//code for drawing the BUILDING class
@@ -786,11 +822,11 @@ namespace Tmpl8
 
 				if (myant[i].isSpawned()) {
 					for (int z = 0; z < 5; z++) {
-						if (myant[i].checkCollision(myresource[z].x, myresource[z].y, myresource[z].x_width, myresource[z].y_height))
+						if (myant[i].checkCollision(myresource[z].getX(), myresource[z].getY(), myresource[z].getWidth(), myresource[z].getHeight()))
 						//if (myant[i].checkCollideBetweenAnts(myresource[z].x, myresource[z].y, myresource[z].x_width, myresource[z].y_height))
 						{
 							myresource[z].ReInit();
-							resourceAmount += myresource[z].pelletValue;
+							resourceAmount += myresource[z].getPelletValue();
 						}
 					}
 				}
@@ -803,8 +839,8 @@ namespace Tmpl8
 					}
 				}
 
-				if (myant[i].checkCollision(mybuilding.x, mybuilding.y, mybuilding.x_width, mybuilding.y_height))
-					myant[i].Avoid(mybuilding.x, mybuilding.y);
+				if (myant[i].checkCollision(mybuilding.getX(), mybuilding.getY(), mybuilding.getWidth(), mybuilding.getHeight()))
+					myant[i].Avoid(mybuilding.getX(), mybuilding.getY());
 
 
 				//AMOUNT OF WORKING ANTS COUNTER
@@ -838,7 +874,7 @@ namespace Tmpl8
 					}
 				}
 
-				if (myenemyant[i].checkCollision(mybuilding.x, mybuilding.y, mybuilding.x_width, mybuilding.y_height))
+				if (myenemyant[i].checkCollision(mybuilding.getX(), mybuilding.getY(), mybuilding.getWidth(), mybuilding.getHeight()))
 				{
 					myenemyant[i].RandomizeNewSpawn();
 					lifePoints-= 1;
@@ -862,7 +898,7 @@ namespace Tmpl8
 						if (!myant[i].isSpawned()) { //finds an ant that is not spawned and initiates it 
 
 							//checks to see if there is a set destination for the building and if there is the ant gets sent there instead a random loc near base
-							if (mybuilding.antSpawnMarkerPlaced) {
+							if (mybuilding.isMarkerPlaced()) {
 								myant[i].TakeAntToBuildingSpawnPoint(mybuilding);
 							}
 
