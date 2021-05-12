@@ -52,7 +52,6 @@ namespace Tmpl8
 	class Building
 	{
 	public:
-
 		Building()
 		{
 			x = 310;
@@ -178,31 +177,6 @@ namespace Tmpl8
 
 			return true;
 		}
-
-		/*	void BestPossiblePathCheck() {
-			float testCase[8];
-			float minValue = 1000;
-			int shotestToDest;
-
-			 testCase[0] = sqrt(pow((x + (distanceToObjToStop - 2)) - antDestinationX, 2) + pow((y + (distanceToObjToStop - 2)) - antDestinationY, 2));  //bottom right
-			 testCase[1] = sqrt(pow((x - (distanceToObjToStop - 2)) - antDestinationX, 2) + pow((y - (distanceToObjToStop - 2)) - antDestinationY, 2));	 //up left
-			 testCase[2] = sqrt(pow((x - (distanceToObjToStop - 2)) - antDestinationX, 2) + pow((y + (distanceToObjToStop - 2)) - antDestinationY, 2));  //bottom left
-			 testCase[3] = sqrt(pow((x + (distanceToObjToStop - 2)) - antDestinationX, 2) + pow((y - (distanceToObjToStop - 2)) - antDestinationY, 2));	 //up right
-			 testCase[4] = sqrt(pow(x - antDestinationX, 2) + pow((y - (distanceToObjToStop - 2)) - antDestinationY, 2));  //up
-			 testCase[5] = sqrt(pow(x - antDestinationX, 2) + pow((y + (distanceToObjToStop - 2)) - antDestinationY, 2));  //down
-			 testCase[6] = sqrt(pow((x - (distanceToObjToStop - 2)) - antDestinationX, 2) + pow(y - antDestinationY, 2));  //left
-			 testCase[7] = sqrt(pow((x + (distanceToObjToStop - 2)) - antDestinationX, 2) + pow(y - antDestinationY, 2));  //right
-
-			 for (int i = 0; i < 7; i++) {
-
-				 if (testCase[i] < minValue) {
-					 minValue = testCase[i];
-					 shotestToDest = i;
-				 }
-			 }
-
-			 bestDecision = shotestToDest;
-		}*/
 
 		void BasicPathfinding(int destX, int destY) {
 
@@ -476,6 +450,12 @@ namespace Tmpl8
 			isSpawnedAnt = false;
 		}
 
+		void TakeAntToBuildingSpawnPoint(Building& bld) {
+			antDestinationX = bld.xAntSpawnMarker;
+			antDestinationY = bld.yAntSpawnMarker;
+			antHeadingToDestination = true;
+		}
+
 		bool isSpawned() const { return isSpawnedAnt; }
 
 
@@ -485,12 +465,13 @@ namespace Tmpl8
 		int antDestinationX, antDestinationY;
 		bool antSelected;
 		bool countedThisAntAlready;
-		bool antHeadingToDestination;
 		
 	private:	//encapsulation
 		int bestDecision;
 		float distanceToMarker;
 		bool isSpawnedAnt = false;
+		bool antHeadingToDestination;
+
 	};
 
 	class EnemyAnt : public Ant
@@ -898,9 +879,7 @@ namespace Tmpl8
 
 							//checks to see if there is a set destination for the building and if there is the ant gets sent there instead a random loc near base
 							if (mybuilding.antSpawnMarkerPlaced) {
-								myant[i].antDestinationX = mybuilding.xAntSpawnMarker;
-								myant[i].antDestinationY = mybuilding.yAntSpawnMarker;
-								myant[i].antHeadingToDestination = true;
+								myant[i].TakeAntToBuildingSpawnPoint(mybuilding);
 							}
 
 							myant[i].InitAnt(); // class function to initiate a player ant
