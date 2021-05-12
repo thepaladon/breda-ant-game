@@ -450,27 +450,52 @@ namespace Tmpl8
 			isSpawnedAnt = false;
 		}
 
+		void DontCountAnt() {
+			countedThisAntAlready = false;
+		}
+
+		void DeselectAnt() {
+			DontCountAnt();
+			antSelected = false;
+		}
+
+		void SetDestination(int x, int y) {
+			antDestinationX = x;
+			antDestinationY = y;
+		}
+
 		void TakeAntToBuildingSpawnPoint(Building& bld) {
 			antDestinationX = bld.xAntSpawnMarker;
 			antDestinationY = bld.yAntSpawnMarker;
 			antHeadingToDestination = true;
 		}
 
-		bool isSpawned() const { return isSpawnedAnt; }
+		void setCoords(int setx, int sety) { x = setx; y = sety; }
 
+		int getX() const { return x; }
+		int getY() const { return y; }
+		int getRotation() const { return rotation; }
+
+		int getDestX() const { return antDestinationX; }
+		int getDestY() const { return antDestinationY; }
+
+		bool isSpawned() const { return isSpawnedAnt; }
+		bool isAntCounted() const { return countedThisAntAlready; }
+		bool isSelected() const { return antSelected;}
 
 		//found out I could use vec2's here but updating it would be too time consuming 
-		int x, y, rotation; // x and y are the top right coordinates of each ants
-		//int xCollisionUpRight, yCollisionUpRight;
-		int antDestinationX, antDestinationY;
-		bool antSelected;
-		bool countedThisAntAlready;
-		
+		 // x and y are the top right coordinates of each ants
+
 	private:	//encapsulation
+		int x, y, rotation;
+		int antDestinationX, antDestinationY;
 		int bestDecision;
 		float distanceToMarker;
 		bool isSpawnedAnt = false;
 		bool antHeadingToDestination;
+		bool countedThisAntAlready;
+		bool antSelected;
+
 
 	};
 
@@ -479,68 +504,51 @@ namespace Tmpl8
 	public:
 		EnemyAnt() {
 			// those need to be the same as the building (around it's midpoint)
-			antDestinationX = 320;
-			antDestinationY = 320;
+			SetDestination(320, 320);
 
 			whereToSpawn = rand() % 4 + 1;
 
-			if (whereToSpawn == 1) {
-				//up
-				x = rand() % 710;
-				y = -20;
-			}
-			else if (whereToSpawn == 2) {
-				x = rand() % 710;
-				y = 740;
-			}
-			else if (whereToSpawn == 3) {
-				x = -20;
-				y = rand() % 710;
-			}
-			else if (whereToSpawn == 4) {
-				x = 710;
-				y = rand() % 710;
-			}
+			if (whereToSpawn == 1) 
+				setCoords(rand() % 710, -20); //up
+			else if (whereToSpawn == 2) 
+				setCoords(rand() % 710, 740); //down
+			else if (whereToSpawn == 3) 
+				setCoords(-20, rand() % 710); //left
+			else if (whereToSpawn == 4) 
+				setCoords(710, rand() % 710); //right
+
 		}
 
 		void EnemyAntCode(Surface* gameScreen)
 		{
 			//drawing the ant
-			enemyAnt.SetFrame(rotation);
-			enemyAnt.Draw(gameScreen, x, y);
+			enemyAnt.SetFrame(getRotation());
+			enemyAnt.Draw(gameScreen, getX(), getY());
 			int delay = rand() % 100;
 
 			if (delay <= enemyAntSpeed) {
-				BasicPathfinding(antDestinationX, antDestinationY);
+				BasicPathfinding(getDestX(), getDestY());
 			}
 			
 		}
 
+		void ReInitEnemyAnt() {
+			SetDestination(320, 320);
+			RandomizeNewSpawn();
+
+		}
+
 		void RandomizeNewSpawn() {
 			whereToSpawn = IRand(4) + 1;
-			if (whereToSpawn == 1) {
-				//up
-				x = rand() % 710;
-				y = -20;
-			}
-			
-			if (whereToSpawn == 2) {
-				//down
-				x = rand() % 710;
-				y = 740;
-			}
-			
-			if (whereToSpawn == 3) {
-				//left
-				x = -20;
-				y = rand() % 710;
-			}
-			
-			if (whereToSpawn == 4) {
-				//right
-				x = 700;
-				y = rand() % 710;
-			}
+
+			if (whereToSpawn == 1)
+				setCoords(rand() % 710, -20); //up
+			else if (whereToSpawn == 2)
+				setCoords(rand() % 710, 740); //down
+			else if (whereToSpawn == 3)
+				setCoords(-20, rand() % 710); //left
+			else if (whereToSpawn == 4)
+				setCoords(710, rand() % 710); //right
 		}
 		int whereToSpawn;
 	};
@@ -616,31 +624,9 @@ namespace Tmpl8
 		}
 
 		for (int i = 0; i < 15; i++) {
-			myenemyant[i].antDestinationX = 320;
-			myenemyant[i].antDestinationY = 320;
-
-			myenemyant[i].whereToSpawn = rand() % 4 + 1;
-
-			if (myenemyant[i].whereToSpawn == 1) {
-				//up
-				myenemyant[i].x = rand() % 710;
-				myenemyant[i].y = -20;
-			}
-			else if (myenemyant[i].whereToSpawn == 2) {
-				myenemyant[i].x = rand() % 710;
-				myenemyant[i].y = 720;
-			}
-			else if (myenemyant[i].whereToSpawn == 3) {
-				myenemyant[i].x = -20;
-				myenemyant[i].y = rand() % 710;
-			}
-			else if (myenemyant[i].whereToSpawn == 4) {
-				myenemyant[i].x = 720;
-				myenemyant[i].y = rand() % 710;
-			}
+			myenemyant[i].ReInitEnemyAnt();
 		}
 
-	
 	}
 
 	void Game::Init()
@@ -717,8 +703,7 @@ namespace Tmpl8
 					boxStartY = mousey;
 
 					for (int n = 0; n < 100; n++) {
-						myant[n].antSelected = false; //ant deselector
-						myant[n].countedThisAntAlready = false;
+						myant[n].DeselectAnt(); 
 					}
 
 					numSelected = 0;
@@ -745,9 +730,8 @@ namespace Tmpl8
 
 				if (numSelected > 0) {
 					for (int n = 0; n < 100; n++) {
-						if (myant[n].antSelected) {
-							myant[n].antDestinationX = mousex;
-							myant[n].antDestinationY = mousey;
+						if (myant[n].isSelected()) {
+							myant[n].SetDestination(mousex, mousey);
 						}
 					}
 				}
@@ -767,11 +751,11 @@ namespace Tmpl8
 			//fix this so it only appeared when there is more that 1 ant selected at the moment and make the ants travel towards it
 			if (destinationPlaced && numSelected > 0) {
 				for (int n = 0; n < 100; n++) {
-					if (myant[n].antSelected) {
+					if (myant[n].isSelected()) {
 
 						//	screen->Line(myant[n].x + (ANTSIZE / 2), myant[n].y + (ANTSIZE / 2), myant[n].antDestinationX, myant[n].antDestinationY, 0xB00B69);
-						screen->Line(float(myant[n].antDestinationX - cursorSize), float(myant[n].antDestinationY - cursorSize), float(myant[n].antDestinationX + cursorSize), float(myant[n].antDestinationY + cursorSize), 0x29B1CA);
-						screen->Line(float(myant[n].antDestinationX - cursorSize), float(myant[n].antDestinationY + cursorSize), float(myant[n].antDestinationX + cursorSize), float(myant[n].antDestinationY - cursorSize), 0x29B1CA);
+						screen->Line(float(myant[n].getDestX() - cursorSize), float(myant[n].getDestY() - cursorSize), float(myant[n].getDestX() + cursorSize), float(myant[n].getDestY() + cursorSize), 0x29B1CA);
+						screen->Line(float(myant[n].getDestX() - cursorSize), float(myant[n].getDestY() + cursorSize), float(myant[n].getDestX() + cursorSize), float(myant[n].getDestY() - cursorSize), 0x29B1CA);
 					}
 				}
 			}
@@ -812,10 +796,10 @@ namespace Tmpl8
 				}
 
 				//counts the number of ants selected
-				if (myant[i].antSelected == true) {
-					if (!myant[i].countedThisAntAlready) {
+				if (myant[i].isSelected()) {
+					if (!myant[i].isAntCounted()) {
 						numSelected += 1;
-						myant[i].countedThisAntAlready = true;
+						myant[i].DontCountAnt();
 					}
 				}
 
@@ -840,7 +824,7 @@ namespace Tmpl8
 				for (int z = 15 - 1; z > i; z--) {
 
 					if(myenemyant[i].checkCollision(myenemyant[z]))
-						myenemyant[i].Avoid(myenemyant[z].x, myenemyant[z].y);
+						myenemyant[i].Avoid(myenemyant[z].getX(), myenemyant[z].getY());
 				}
 
 				for (int n = 0; n < 100; n++) {
