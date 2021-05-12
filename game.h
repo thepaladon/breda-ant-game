@@ -3,6 +3,7 @@
 namespace Tmpl8 {
 
 class Surface;
+
 class Game
 {
 public:
