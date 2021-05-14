@@ -269,6 +269,7 @@ namespace Tmpl8
 			}
 		}
 
+		//I never use this
 		void AdvancedPathfinding() {
 
 			if (bestDecision == 0) {
@@ -521,8 +522,6 @@ namespace Tmpl8
 		bool antHeadingToDestination;
 		bool countedThisAntAlready;
 		bool antSelected;
-
-
 	};
 
 	class EnemyAnt : public Ant
@@ -647,6 +646,7 @@ namespace Tmpl8
 
 	//Reinitialises the game after a "game over"
 	void ReInitGame() {
+		//those values need to be the same num as when they're declared
 		lifePoints = 10;
 		displayScore = 0;
 		resourceAmount = 1000;
@@ -706,7 +706,7 @@ namespace Tmpl8
 			//Outlines of the gameplay box (where ants roam) 
 			screen->Box(0, 0, 720, 720, 0x3C2B0A);
 
-			//INFORMATION FOR PLAYER:
+			//----------INFORMATION FOR PLAYER:--------------
 			screen->Print("LIFE OF BASE", 730, 20, 0xffffff);
 			for (int i = 1; i <= lifePoints; i++) { //draws life container box
 				screen->Line(float(725 + i * 5), 30, float(725 + i * 5), 40, 0xff0000);
@@ -729,6 +729,8 @@ namespace Tmpl8
 
 			screen->Print("By clicking on the building and right clicking you can", 730, 160, 0xffffff);
 			screen->Print("select a location to which newly spawned ants will travel", 730, 170, 0xffffff);
+			//----------------------------------------------------
+
 
 			//do on left click
 			if (GetAsyncKeyState(VK_LBUTTON))
@@ -802,28 +804,23 @@ namespace Tmpl8
 				screen->Line(float(mybuilding.getSpwnMarkX() - cursorSize), float(mybuilding.getSpwnMarkY() + cursorSize), float(mybuilding.getSpwnMarkX() + cursorSize), float(mybuilding.getSpwnMarkY() - cursorSize), 0xB00B69);
 			}
 
-			//code for drawing the BUILDING class
+			//code for drawing the BUILDING class and checking if its selected
 			mybuilding.BuildingCode(screen);
 
 			//goes through the class array and executes something for each PLAYER ant
 			for (int i = 0; i < 100; i++) {
 
-				myant[i].AntCode(screen);
-
 				//compares each ant of the array to the others
 				for (int z = 100 - 1; z > i; z--) {
-
 					if (myant[z].isSpawned())
-						//if (myant[i].checkCollideBetweenAnts(myant[z].x, myant[z].y, ANTSIZE, ANTSIZE))
 						if (myant[i].checkCollision(myant[z]))
-							//myant[i].Avoid(myant[z].x, myant[z].y);
 							myant[i].Avoid(myant[z]);
 				}
 
+				//collision between friendly ants and pellets
 				if (myant[i].isSpawned()) {
 					for (int z = 0; z < 5; z++) {
 						if (myant[i].checkCollision(myresource[z].getX(), myresource[z].getY(), myresource[z].getWidth(), myresource[z].getHeight()))
-						//if (myant[i].checkCollideBetweenAnts(myresource[z].x, myresource[z].y, myresource[z].x_width, myresource[z].y_height))
 						{
 							myresource[z].ReInit();
 							resourceAmount += myresource[z].getPelletValue();
@@ -843,26 +840,26 @@ namespace Tmpl8
 					myant[i].Avoid(mybuilding.getX(), mybuilding.getY());
 
 
-				//AMOUNT OF WORKING ANTS COUNTER
-				if (myant[i].isSpawned()) {
-					numOfActiveAnts++;
-				}
-
+				
+				//displays number of active ants on screen
 				if (i == 99) {
 					printf("%i \n", numOfActiveAnts);
 					numOfActiveAnts = 0;
 				}
+
+				myant[i].AntCode(screen);
 			}
 
 			//goes through the class array and executes something for each ENEMY ant
 			for (int i = 0; i < 15; i++) {
 
+				//collision between enemy ants
 				for (int z = 15 - 1; z > i; z--) {
-
 					if(myenemyant[i].checkCollision(myenemyant[z]))
 						myenemyant[i].Avoid(myenemyant[z].getX(), myenemyant[z].getY());
 				}
 
+				//collision between enemy ants and player ants
 				for (int n = 0; n < 100; n++) {
 					if (myenemyant[i].checkCollision(myant[n]))
 					{
@@ -896,15 +893,15 @@ namespace Tmpl8
 					for (int i = 0; i < 100; i++)
 					{
 						if (!myant[i].isSpawned()) { //finds an ant that is not spawned and initiates it 
+							
+							myant[i].InitAnt(); //initiates a player ant
 
-							//checks to see if there is a set destination for the building and if there is the ant gets sent there instead a random loc near base
+							//checks to see if there is a set destination from the building and if there is the ant gets directed to there after spawning in a random location near base
 							if (mybuilding.isMarkerPlaced()) {
 								myant[i].TakeAntToBuildingSpawnPoint(mybuilding);
 							}
-
-							myant[i].InitAnt(); // class function to initiate a player ant
 							resourceAmount -= 500; //this value has to be the same as the if up top
-							i = 100; //if it finds an ant to spawn it immidiately ends the loop since I want to spawn a single ant in the loop
+							i = 100; //if it finds an ant to spawn it immidiately ends the loop since I want to spawn a single ant
 							setTimer = timeDeltaTime + 100; // 0.1 seconds delay between spawning ants so it doesn't spawn them every frame
 
 						}
@@ -956,6 +953,7 @@ namespace Tmpl8
 		//printf("Box Style %i \n", boxStyle);
 		//printf("start X: %i  start Y: %i \n", boxStartX, boxStartY);
 		//printf("end X: %i  end Y: %i \n", boxEndX, boxEndY);
+		
 	}
 
 };
